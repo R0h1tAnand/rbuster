@@ -1,0 +1,59 @@
+[package]
+name = "rbuster"
+version = "1.0.0"
+edition = "2021"
+authors = ["R0h1tAnand"]
+description = "Blazingly fast directory/DNS/vhost buster written in Rust"
+license = "MIT"
+repository = "https://github.com/R0h1tAnand/rbuster"
+keywords = ["security", "pentesting", "brute-force", "directory-buster"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+# CLI
+clap = { version = "4", features = ["derive", "color"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# HTTP client
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls-native-roots", "cookies", "gzip", "brotli", "socks", "charset", "http2"] }
+
+# DNS resolver
+hickory-resolver = { version = "0.24", features = ["tokio-runtime"] }
+
+# Progress bar and terminal
+indicatif = "0.17"
+console = "0.15"
+colored = "2"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Error handling
+anyhow = "1"
+thiserror = "1"
+
+# Async utilities
+futures = "0.3"
+async-channel = "2"
+
+# URL parsing
+url = "2"
+
+# Regex for pattern matching
+regex = "1"
+
+# TFTP client
+async-tftp = "0.3"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+opt-level = 0
