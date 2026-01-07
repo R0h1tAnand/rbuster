@@ -109,7 +109,8 @@ impl DnsClient {
     /// Detect wildcard DNS
     pub async fn detect_wildcard(&self, base_domain: &str) -> Option<Vec<IpAddr>> {
         // Test with a random subdomain that shouldn't exist
-        let random_subdomain = format!("robuster-wildcard-test-{}.{}", rand_string(16), base_domain);
+        let random_subdomain =
+            format!("robuster-wildcard-test-{}.{}", rand_string(16), base_domain);
 
         if let Ok(response) = self.resolver.lookup_ip(&random_subdomain).await {
             let ips: Vec<IpAddr> = response.iter().collect();
