@@ -1545,28 +1545,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rbuster"
-version = "1.0.0"
-dependencies = [
- "anyhow",
- "async-channel",
- "async-tftp",
- "clap",
- "colored",
- "console",
- "futures",
- "hickory-resolver",
- "indicatif",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "tokio",
- "url",
-]
-
-[[package]]
 name = "redox_syscall"
 version = "0.5.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1665,6 +1643,28 @@ dependencies = [
  "libc",
  "untrusted",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "robuster"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "async-channel",
+ "async-tftp",
+ "clap",
+ "colored",
+ "console",
+ "futures",
+ "hickory-resolver",
+ "indicatif",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "url",
 ]
 
 [[package]]

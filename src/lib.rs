@@ -1,4 +1,4 @@
-//! rbuster - Blazingly fast directory/DNS/vhost buster written in Rust
+//! robuster - Blazingly fast directory/DNS/vhost buster written in Rust
 
 pub mod cli;
 pub mod core;

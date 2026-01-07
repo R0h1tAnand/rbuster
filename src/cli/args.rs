@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "rbuster",
+    name = "robuster",
     version = "1.0.0",
     about = "Blazingly fast directory/DNS/vhost buster written in Rust",
     long_about = None,
@@ -83,7 +83,7 @@ pub struct HttpOpts {
     pub cookies: Option<String>,
 
     /// Custom User-Agent
-    #[arg(short = 'a', long, default_value = "rbuster/1.0", value_name = "UA")]
+    #[arg(short = 'a', long, default_value = "robuster/1.0", value_name = "UA")]
     pub user_agent: String,
 
     /// Skip TLS certificate verification

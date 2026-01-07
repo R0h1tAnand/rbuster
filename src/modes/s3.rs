@@ -32,7 +32,7 @@ pub async fn run(args: S3Args) -> Result<()> {
     // Build HTTP client
     let client = Arc::new(
         ClientBuilder::new()
-            .user_agent("rbuster/1.0")
+            .user_agent("robuster/1.0")
             .timeout(Duration::from_secs(args.timeout))
             .pool_max_idle_per_host(50)
             .tcp_nodelay(true)

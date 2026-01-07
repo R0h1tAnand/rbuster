@@ -1,12 +1,12 @@
-//! rbuster - Blazingly fast directory/DNS/vhost buster written in Rust
+//! robuster - Blazingly fast directory/DNS/vhost buster written in Rust
 //!
 //! A high-performance alternative to gobuster, written in Rust for maximum speed.
 //!
 //! Usage:
-//!   rbuster dir -u https://example.com -w wordlist.txt
-//!   rbuster dns -d example.com -w subdomains.txt
-//!   rbuster vhost -u https://example.com -w vhosts.txt
-//!   rbuster fuzz -u https://example.com/FUZZ -w wordlist.txt
+//!   robuster dir -u https://example.com -w wordlist.txt
+//!   robuster dns -d example.com -w subdomains.txt
+//!   robuster vhost -u https://example.com -w vhosts.txt
+//!   robuster fuzz -u https://example.com/FUZZ -w wordlist.txt
 
 use clap::Parser;
 use colored::Colorize;

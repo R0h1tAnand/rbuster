@@ -1,4 +1,4 @@
-# rbuster
+# robuster
 
 > Blazingly fast directory/DNS/vhost buster written in Rust 🦀
 
@@ -18,10 +18,10 @@ A high-performance alternative to [gobuster](https://github.com/OJ/gobuster), le
 ### Build from source
 
 ```bash
-git clone https://github.com/rohit/rbuster
-cd rbuster
+git clone https://github.com/rohit/robuster
+cd robuster
 cargo build --release
-./target/release/rbuster --help
+./target/release/robuster --help
 ```
 
 ## Usage
@@ -30,73 +30,73 @@ cargo build --release
 
 ```bash
 # Basic usage
-rbuster dir -u https://example.com -w wordlist.txt
+robuster dir -u https://example.com -w wordlist.txt
 
 # With extensions
-rbuster dir -u https://example.com -w wordlist.txt -x php,html,js
+robuster dir -u https://example.com -w wordlist.txt -x php,html,js
 
 # Show response length, follow redirects
-rbuster dir -u https://example.com -w wordlist.txt -l -r
+robuster dir -u https://example.com -w wordlist.txt -l -r
 
 # With custom headers and cookies
-rbuster dir -u https://example.com -w wordlist.txt -H "Authorization: Bearer token" -c "session=abc"
+robuster dir -u https://example.com -w wordlist.txt -H "Authorization: Bearer token" -c "session=abc"
 
 # High thread count for speed
-rbuster dir -u https://example.com -w wordlist.txt -t 50
+robuster dir -u https://example.com -w wordlist.txt -t 50
 ```
 
 ### DNS Subdomain Enumeration (dns)
 
 ```bash
 # Basic usage
-rbuster dns -d example.com -w subdomains.txt
+robuster dns -d example.com -w subdomains.txt
 
 # Show IPs and CNAMEs
-rbuster dns -d example.com -w subdomains.txt -i -c
+robuster dns -d example.com -w subdomains.txt -i -c
 
 # Custom DNS resolver
-rbuster dns -d example.com -w subdomains.txt -r 8.8.8.8
+robuster dns -d example.com -w subdomains.txt -r 8.8.8.8
 ```
 
 ### Virtual Host Discovery (vhost)
 
 ```bash
 # Basic usage
-rbuster vhost -u https://10.10.10.10 -w vhosts.txt
+robuster vhost -u https://10.10.10.10 -w vhosts.txt
 
 # Append domain to wordlist entries
-rbuster vhost -u https://10.10.10.10 -w vhosts.txt --append-domain --domain example.com
+robuster vhost -u https://10.10.10.10 -w vhosts.txt --append-domain --domain example.com
 ```
 
 ### Fuzzing (fuzz)
 
 ```bash
 # URL parameter fuzzing
-rbuster fuzz -u "https://example.com?id=FUZZ" -w payloads.txt
+robuster fuzz -u "https://example.com?id=FUZZ" -w payloads.txt
 
 # POST data fuzzing
-rbuster fuzz -u https://example.com/login -w passwords.txt -d "user=admin&pass=FUZZ" --method POST
+robuster fuzz -u https://example.com/login -w passwords.txt -d "user=admin&pass=FUZZ" --method POST
 
 # Header fuzzing
-rbuster fuzz -u https://example.com -w tokens.txt -H "X-API-Key: FUZZ"
+robuster fuzz -u https://example.com -w tokens.txt -H "X-API-Key: FUZZ"
 ```
 
 ### S3 Bucket Enumeration (s3)
 
 ```bash
-rbuster s3 -w bucket-names.txt
+robuster s3 -w bucket-names.txt
 ```
 
 ### GCS Bucket Enumeration (gcs)
 
 ```bash
-rbuster gcs -w bucket-names.txt
+robuster gcs -w bucket-names.txt
 ```
 
 ### TFTP Enumeration (tftp)
 
 ```bash
-rbuster tftp -s 10.10.10.10 -w filenames.txt
+robuster tftp -s 10.10.10.10 -w filenames.txt
 ```
 
 ## Global Options
@@ -113,7 +113,7 @@ rbuster tftp -s 10.10.10.10 -w filenames.txt
 
 ## Performance
 
-rbuster is designed to exceed gobuster's performance through:
+robuster is designed to exceed gobuster's performance through:
 
 - **Tokio async runtime** - Non-blocking concurrent I/O
 - **Connection pooling** - Reuses HTTP connections

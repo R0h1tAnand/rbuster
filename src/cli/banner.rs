@@ -1,4 +1,4 @@
-//! Banner display for rbuster
+//! Banner display for robuster
 
 use colored::*;
 
@@ -13,7 +13,7 @@ pub fn print_banner() {
 
     println!("{}", banner.bright_cyan().bold());
     println!("{}", "═".repeat(60).bright_blue());
-    println!("{} {}", "rbuster".bright_green().bold(), "v1.0.0".white());
+    println!("{} {}", "robuster".bright_green().bold(), "v1.0.0".white());
     println!(
         "{}",
         "Blazingly fast directory/DNS buster written in Rust".white()
@@ -36,7 +36,7 @@ pub fn print_config(mode: &str, config: &[(&str, String)]) {
         );
     }
     println!("{}", "═".repeat(60).bright_blue());
-    println!("Starting rbuster in {} mode", mode.bright_yellow().bold());
+    println!("Starting robuster in {} mode", mode.bright_yellow().bold());
     println!("{}", "═".repeat(60).bright_blue());
 }
 

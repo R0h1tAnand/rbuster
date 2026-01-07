@@ -1,6 +1,6 @@
-# Publishing rbuster to crates.io
+# Publishing robuster to crates.io
 
-This guide explains how to use the automated CI/CD pipeline to build, release, and publish rbuster.
+This guide explains how to use the automated CI/CD pipeline to build, release, and publish robuster.
 
 ## Setup Steps
 
@@ -11,7 +11,7 @@ This guide explains how to use the automated CI/CD pipeline to build, release, a
 - Copy the token
 
 ### 2. Add Secret to GitHub Repository
-- Go to your GitHub repository: https://github.com/R0h1tAnand/rbuster
+- Go to your GitHub repository: https://github.com/R0h1tAnand/robuster
 - Settings → Secrets and variables → Actions
 - Click "New repository secret"
 - Name: `CARGO_REGISTRY_TOKEN`
@@ -20,11 +20,11 @@ This guide explains how to use the automated CI/CD pipeline to build, release, a
 
 ### 3. Verify Cargo.toml (Already Done ✓)
 Your Cargo.toml has all required fields:
-- `name = "rbuster"`
+- `name = "robuster"`
 - `version = "1.0.0"`
 - `description = "..."`
 - `license = "MIT"`
-- `repository = "https://github.com/R0h1tAnand/rbuster"`
+- `repository = "https://github.com/R0h1tAnand/robuster"`
 
 ## Workflow
 
@@ -80,7 +80,7 @@ cargo publish --token <your-token>
 ### publish.yml (Crates.io Publishing)
 - Triggers when a GitHub Release is published
 - Automatically publishes to crates.io
-- Users can then install with: `cargo install rbuster`
+- Users can then install with: `cargo install robuster`
 
 ## Troubleshooting
 
@@ -94,9 +94,9 @@ cargo publish --token <your-token>
 - Version must be higher than the last published version
 
 ## Installation Command (After Publishing)
-Users can install rbuster with:
+Users can install robuster with:
 ```bash
-cargo install rbuster
+cargo install robuster
 ```
 
 ## Versioning Convention

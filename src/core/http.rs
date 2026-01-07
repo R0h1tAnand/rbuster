@@ -22,7 +22,7 @@ pub struct HttpConfig {
 impl Default for HttpConfig {
     fn default() -> Self {
         Self {
-            user_agent: "rbuster/1.0".to_string(),
+            user_agent: "robuster/1.0".to_string(),
             timeout: Duration::from_secs(10),
             insecure: false,
             follow_redirect: false,

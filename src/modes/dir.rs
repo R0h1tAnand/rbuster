@@ -69,7 +69,7 @@ pub async fn run(args: DirArgs) -> Result<()> {
 
     // Check for wildcard
     if !args.wildcard {
-        let random_path = format!("{}/rbuster-wildcard-test-{}", base_url, rand_string(16));
+        let random_path = format!("{}/robuster-wildcard-test-{}", base_url, rand_string(16));
         match http_client.check_url(&random_path, &args.http.method).await {
             Ok((status, _, _)) if valid_status_codes.contains(&status) => {
                 print_warning("Wildcard response detected! Use --wildcard to force continue");

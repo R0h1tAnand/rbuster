@@ -1,4 +1,4 @@
-//! Custom error types for rbuster
+//! Custom error types for robuster
 
 use thiserror::Error;
 
