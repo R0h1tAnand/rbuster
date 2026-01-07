@@ -1,20 +1,21 @@
 //! Virtual host enumeration mode
 
 use crate::cli::VhostArgs;
-use crate::core::{HttpConfig, load_wordlist, parse_headers};
-use crate::output::{ProgressTracker, print_vhost_result, print_error, OutputHandler, VhostResult};
+use crate::core::{load_wordlist, parse_headers};
 use crate::error::Result;
+use crate::output::{print_error, print_vhost_result, OutputHandler, ProgressTracker, VhostResult};
+use futures::stream::{self, StreamExt};
+use reqwest::ClientBuilder;
+use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::Duration;
-use std::collections::HashSet;
 use tokio::sync::Semaphore;
-use futures::stream::{self, StreamExt};
-use reqwest::{Client, ClientBuilder};
 
 /// Run virtual host enumeration
 pub async fn run(args: VhostArgs) -> Result<()> {
     // Parse exclude lengths
-    let exclude_lengths: HashSet<usize> = args.exclude_length
+    let exclude_lengths: HashSet<usize> = args
+        .exclude_length
         .as_ref()
         .map(|s| s.split(',').filter_map(|l| l.trim().parse().ok()).collect())
         .unwrap_or_default();
@@ -38,7 +39,8 @@ pub async fn run(args: VhostArgs) -> Result<()> {
     let client = Arc::new(builder.build()?);
 
     // Load wordlist
-    let wordlist = load_wordlist(&args.global.wordlist).await
+    let wordlist = load_wordlist(&args.global.wordlist)
+        .await
         .map_err(|e| crate::error::RbusterError::WordlistError(e))?;
     let total = wordlist.len();
 
@@ -49,9 +51,7 @@ pub async fn run(args: VhostArgs) -> Result<()> {
     let progress = ProgressTracker::new(total as u64, args.global.quiet || args.global.no_progress);
 
     // Create output handler
-    let output = OutputHandler::new(
-        args.global.output.as_deref()
-    ).await?;
+    let output = OutputHandler::new(args.global.output.as_deref()).await?;
     let output = Arc::new(output);
 
     // Get baseline response for comparison
@@ -83,7 +83,7 @@ pub async fn run(args: VhostArgs) -> Result<()> {
 
             async move {
                 let _permit = semaphore.acquire().await.unwrap();
-                
+
                 if let Some(d) = delay {
                     tokio::time::sleep(d).await;
                 }
@@ -100,8 +100,7 @@ pub async fn run(args: VhostArgs) -> Result<()> {
                 };
 
                 // Build request with Host header
-                let mut request = client.get(&url)
-                    .header("Host", &host);
+                let mut request = client.get(&url).header("Host", &host);
 
                 // Add custom headers
                 for (key, value) in &headers {
@@ -118,13 +117,13 @@ pub async fn run(args: VhostArgs) -> Result<()> {
                         let size = body.len();
 
                         // Skip if size matches baseline or is in exclude list
-                        let should_show = size != baseline_size 
+                        let should_show = size != baseline_size
                             && !exclude_lengths.contains(&size)
-                            && status != 400;  // Skip bad request errors
+                            && status != 400; // Skip bad request errors
 
                         if should_show {
                             progress.inc_found();
-                            
+
                             // Print to console
                             print_vhost_result(&host, status, size);
 
@@ -138,7 +137,8 @@ pub async fn run(args: VhostArgs) -> Result<()> {
                                 if writer.is_json() {
                                     let _ = writer.write_json(&result).await;
                                 } else {
-                                    let line = format!("{} (Status: {}) [Size: {}]", host, status, size);
+                                    let line =
+                                        format!("{} (Status: {}) [Size: {}]", host, status, size);
                                     let _ = writer.write_line(&line).await;
                                 }
                             }

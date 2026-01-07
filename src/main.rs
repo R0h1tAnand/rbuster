@@ -18,7 +18,7 @@ mod error;
 mod modes;
 mod output;
 
-use cli::{Cli, Commands, print_banner, print_config, print_finished};
+use cli::{print_banner, print_config, print_finished, Cli, Commands};
 
 #[tokio::main]
 async fn main() {
@@ -60,79 +60,105 @@ async fn run(cli: Cli) -> error::Result<()> {
     match cli.command {
         Commands::Dir(args) => {
             if !quiet {
-                print_config("directory enumeration", &[
-                    ("Url", args.url.clone()),
-                    ("Method", args.http.method.clone()),
-                    ("Threads", args.global.threads.to_string()),
-                    ("Wordlist", args.global.wordlist.display().to_string()),
-                    ("User Agent", args.http.user_agent.clone()),
-                    ("Timeout", format!("{}s", args.http.timeout)),
-                ]);
+                print_config(
+                    "directory enumeration",
+                    &[
+                        ("Url", args.url.clone()),
+                        ("Method", args.http.method.clone()),
+                        ("Threads", args.global.threads.to_string()),
+                        ("Wordlist", args.global.wordlist.display().to_string()),
+                        ("User Agent", args.http.user_agent.clone()),
+                        ("Timeout", format!("{}s", args.http.timeout)),
+                    ],
+                );
             }
             modes::dir::run(args).await?;
         }
         Commands::Dns(args) => {
             if !quiet {
-                print_config("DNS subdomain enumeration", &[
-                    ("Domain", args.domain.clone()),
-                    ("Threads", args.global.threads.to_string()),
-                    ("Wordlist", args.global.wordlist.display().to_string()),
-                    ("Resolver", args.resolver.clone().unwrap_or_else(|| "system".to_string())),
-                    ("Timeout", format!("{}s", args.timeout)),
-                ]);
+                print_config(
+                    "DNS subdomain enumeration",
+                    &[
+                        ("Domain", args.domain.clone()),
+                        ("Threads", args.global.threads.to_string()),
+                        ("Wordlist", args.global.wordlist.display().to_string()),
+                        (
+                            "Resolver",
+                            args.resolver
+                                .clone()
+                                .unwrap_or_else(|| "system".to_string()),
+                        ),
+                        ("Timeout", format!("{}s", args.timeout)),
+                    ],
+                );
             }
             modes::dns::run(args).await?;
         }
         Commands::Vhost(args) => {
             if !quiet {
-                print_config("virtual host enumeration", &[
-                    ("Url", args.url.clone()),
-                    ("Threads", args.global.threads.to_string()),
-                    ("Wordlist", args.global.wordlist.display().to_string()),
-                    ("Append Domain", args.append_domain.to_string()),
-                ]);
+                print_config(
+                    "virtual host enumeration",
+                    &[
+                        ("Url", args.url.clone()),
+                        ("Threads", args.global.threads.to_string()),
+                        ("Wordlist", args.global.wordlist.display().to_string()),
+                        ("Append Domain", args.append_domain.to_string()),
+                    ],
+                );
             }
             modes::vhost::run(args).await?;
         }
         Commands::Fuzz(args) => {
             if !quiet {
-                print_config("fuzzing", &[
-                    ("Url", args.url.clone()),
-                    ("Method", args.http.method.clone()),
-                    ("Threads", args.global.threads.to_string()),
-                    ("Wordlist", args.global.wordlist.display().to_string()),
-                ]);
+                print_config(
+                    "fuzzing",
+                    &[
+                        ("Url", args.url.clone()),
+                        ("Method", args.http.method.clone()),
+                        ("Threads", args.global.threads.to_string()),
+                        ("Wordlist", args.global.wordlist.display().to_string()),
+                    ],
+                );
             }
             modes::fuzz::run(args).await?;
         }
         Commands::S3(args) => {
             if !quiet {
-                print_config("S3 bucket enumeration", &[
-                    ("Threads", args.global.threads.to_string()),
-                    ("Wordlist", args.global.wordlist.display().to_string()),
-                    ("Max Files", args.max_files.to_string()),
-                ]);
+                print_config(
+                    "S3 bucket enumeration",
+                    &[
+                        ("Threads", args.global.threads.to_string()),
+                        ("Wordlist", args.global.wordlist.display().to_string()),
+                        ("Max Files", args.max_files.to_string()),
+                    ],
+                );
             }
             modes::s3::run(args).await?;
         }
         Commands::Gcs(args) => {
             if !quiet {
-                print_config("GCS bucket enumeration", &[
-                    ("Threads", args.global.threads.to_string()),
-                    ("Wordlist", args.global.wordlist.display().to_string()),
-                    ("Max Files", args.max_files.to_string()),
-                ]);
+                print_config(
+                    "GCS bucket enumeration",
+                    &[
+                        ("Threads", args.global.threads.to_string()),
+                        ("Wordlist", args.global.wordlist.display().to_string()),
+                        ("Max Files", args.max_files.to_string()),
+                    ],
+                );
             }
             modes::gcs::run(args).await?;
         }
         Commands::Tftp(args) => {
             if !quiet {
-                print_config("TFTP file enumeration", &[
-                    ("Server", args.server.clone()),
-                    ("Threads", args.global.threads.to_string()),
-                    ("Wordlist", args.global.wordlist.display().to_string()),
-                    ("Timeout", format!("{}s", args.timeout)),
-                ]);
+                print_config(
+                    "TFTP file enumeration",
+                    &[
+                        ("Server", args.server.clone()),
+                        ("Threads", args.global.threads.to_string()),
+                        ("Wordlist", args.global.wordlist.display().to_string()),
+                        ("Timeout", format!("{}s", args.timeout)),
+                    ],
+                );
             }
             modes::tftp::run(args).await?;
         }

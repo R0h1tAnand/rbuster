@@ -1,15 +1,17 @@
 //! DNS subdomain enumeration mode
 
 use crate::cli::DnsArgs;
-use crate::core::{DnsClient, DnsConfig, load_wordlist};
-use crate::output::{ProgressTracker, print_dns_result, print_warning, print_error, OutputHandler, DnsResultJson};
+use crate::core::{load_wordlist, DnsClient, DnsConfig};
 use crate::error::Result;
-use std::sync::Arc;
-use std::time::Duration;
+use crate::output::{
+    print_dns_result, print_error, print_warning, DnsResultJson, OutputHandler, ProgressTracker,
+};
+use futures::stream::{self, StreamExt};
 use std::collections::HashSet;
 use std::net::IpAddr;
+use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::Semaphore;
-use futures::stream::{self, StreamExt};
 
 /// Run DNS subdomain enumeration
 pub async fn run(args: DnsArgs) -> Result<()> {
@@ -21,7 +23,8 @@ pub async fn run(args: DnsArgs) -> Result<()> {
     let dns_client = Arc::new(DnsClient::new(dns_config).await?);
 
     // Load wordlist
-    let wordlist = load_wordlist(&args.global.wordlist).await
+    let wordlist = load_wordlist(&args.global.wordlist)
+        .await
         .map_err(|e| crate::error::RbusterError::WordlistError(e))?;
     let total = wordlist.len();
 
@@ -32,9 +35,7 @@ pub async fn run(args: DnsArgs) -> Result<()> {
     let progress = ProgressTracker::new(total as u64, args.global.quiet || args.global.no_progress);
 
     // Create output handler
-    let output = OutputHandler::new(
-        args.global.output.as_deref()
-    ).await?;
+    let output = OutputHandler::new(args.global.output.as_deref()).await?;
     let output = Arc::new(output);
 
     // Check for wildcard DNS
@@ -42,7 +43,10 @@ pub async fn run(args: DnsArgs) -> Result<()> {
         if let Some(ips) = dns_client.detect_wildcard(&base_domain).await {
             print_warning(&format!(
                 "Wildcard DNS detected! IPs: {}. Use --wildcard to force continue",
-                ips.iter().map(|ip| ip.to_string()).collect::<Vec<_>>().join(", ")
+                ips.iter()
+                    .map(|ip| ip.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ")
             ));
             if !args.global.quiet {
                 ips.into_iter().collect()
@@ -76,7 +80,7 @@ pub async fn run(args: DnsArgs) -> Result<()> {
 
             async move {
                 let _permit = semaphore.acquire().await.unwrap();
-                
+
                 if let Some(d) = delay {
                     tokio::time::sleep(d).await;
                 }
@@ -88,19 +92,19 @@ pub async fn run(args: DnsArgs) -> Result<()> {
                 match result {
                     Ok(dns_result) => {
                         // Check if this is a wildcard response
-                        let is_wildcard = !wildcard_ips.is_empty() 
+                        let is_wildcard = !wildcard_ips.is_empty()
                             && dns_result.ips.iter().all(|ip| wildcard_ips.contains(ip));
 
                         if !is_wildcard {
                             progress.inc_found();
-                            
+
                             // Print to console
                             print_dns_result(
                                 &subdomain,
                                 &dns_result.ips,
                                 &dns_result.cnames,
                                 show_ips,
-                                show_cname
+                                show_cname,
                             );
 
                             // Write to file if configured
@@ -113,7 +117,9 @@ pub async fn run(args: DnsArgs) -> Result<()> {
                                 if writer.is_json() {
                                     let _ = writer.write_json(&result).await;
                                 } else {
-                                    let ips_str = dns_result.ips.iter()
+                                    let ips_str = dns_result
+                                        .ips
+                                        .iter()
                                         .map(|ip| ip.to_string())
                                         .collect::<Vec<_>>()
                                         .join(", ");

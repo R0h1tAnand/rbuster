@@ -1,6 +1,6 @@
 //! CLI argument definitions using clap derive
 
-use clap::{Args, Parser, Subcommand, ValueEnum};
+use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
@@ -133,7 +133,12 @@ pub struct DirArgs {
     pub extensions: Option<String>,
 
     /// Positive status codes (comma-separated)
-    #[arg(short = 's', long, default_value = "200,204,301,302,307,308,401,403,405", value_name = "CODES")]
+    #[arg(
+        short = 's',
+        long,
+        default_value = "200,204,301,302,307,308,401,403,405",
+        value_name = "CODES"
+    )]
     pub status_codes: String,
 
     /// Negative status codes to exclude (comma-separated)

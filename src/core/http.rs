@@ -1,9 +1,9 @@
 //! HTTP client wrapper with configurable options
 
-use reqwest::{Client, ClientBuilder, Method, Response, Proxy};
-use std::time::Duration;
-use std::collections::HashMap;
 use crate::error::Result;
+use reqwest::{Client, ClientBuilder, Method, Proxy, Response};
+use std::collections::HashMap;
+use std::time::Duration;
 
 /// HTTP client configuration
 #[derive(Clone, Debug)]
@@ -104,17 +104,17 @@ impl HttpClient {
     pub async fn check_url(&self, url: &str, method: &str) -> Result<(u16, usize, Option<String>)> {
         let method = Method::from_bytes(method.as_bytes()).unwrap_or(Method::GET);
         let response = self.request(method, url, None).await?;
-        
+
         let status = response.status().as_u16();
         let redirect = response
             .headers()
             .get("location")
             .and_then(|v| v.to_str().ok())
             .map(|s| s.to_string());
-        
+
         let body = response.bytes().await?;
         let size = body.len();
-        
+
         Ok((status, size, redirect))
     }
 }

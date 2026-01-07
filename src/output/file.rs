@@ -1,11 +1,11 @@
 //! File output handlers (text and JSON)
 
+use serde::Serialize;
 use std::path::Path;
+use std::sync::Arc;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use tokio::sync::Mutex;
-use std::sync::Arc;
-use serde::Serialize;
 
 /// Result types for JSON output
 #[derive(Serialize, Clone)]
@@ -55,12 +55,10 @@ pub struct FileWriter {
 
 impl FileWriter {
     pub async fn new(path: &Path) -> std::io::Result<Self> {
-        let json_mode = path.extension()
-            .map(|ext| ext == "json")
-            .unwrap_or(false);
-        
+        let json_mode = path.extension().map(|ext| ext == "json").unwrap_or(false);
+
         let mut file = File::create(path).await?;
-        
+
         if json_mode {
             file.write_all(b"[\n").await?;
         }
@@ -82,16 +80,16 @@ impl FileWriter {
     pub async fn write_json<T: Serialize>(&self, item: &T) -> std::io::Result<()> {
         let mut file = self.file.lock().await;
         let mut first = self.first_entry.lock().await;
-        
+
         if !*first {
             file.write_all(b",\n").await?;
         }
         *first = false;
-        
+
         let json = serde_json::to_string_pretty(item)
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
         file.write_all(json.as_bytes()).await?;
-        
+
         Ok(())
     }
 

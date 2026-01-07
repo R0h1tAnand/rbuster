@@ -54,7 +54,8 @@ pub fn print_dns_result(
     let mut line = format!("{}", subdomain.bright_green());
 
     if show_ips && !ips.is_empty() {
-        let ip_str: String = ips.iter()
+        let ip_str: String = ips
+            .iter()
             .map(|ip| ip.to_string())
             .collect::<Vec<_>>()
             .join(", ");
@@ -87,13 +88,7 @@ pub fn print_vhost_result(host: &str, status: u16, size: usize) {
 }
 
 /// Print a found result for fuzz mode
-pub fn print_fuzz_result(
-    payload: &str,
-    status: u16,
-    size: usize,
-    words: usize,
-    lines: usize,
-) {
+pub fn print_fuzz_result(payload: &str, status: u16, size: usize, words: usize, lines: usize) {
     let status_colored = match status {
         200..=299 => status.to_string().bright_green(),
         300..=399 => status.to_string().bright_yellow(),
@@ -120,11 +115,7 @@ pub fn print_bucket_result(bucket: &str, status: &str, files: &[String]) {
         _ => status.white(),
     };
 
-    println!(
-        "{} [{}]",
-        bucket.bright_white(),
-        status_colored
-    );
+    println!("{} [{}]", bucket.bright_white(), status_colored);
 
     for file in files.iter().take(5) {
         println!("  └── {}", file.bright_cyan());

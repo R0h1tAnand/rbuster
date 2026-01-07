@@ -2,14 +2,14 @@
 
 use crate::cli::FuzzArgs;
 use crate::core::{load_wordlist, parse_headers};
-use crate::output::{ProgressTracker, print_fuzz_result, print_error, OutputHandler, FuzzResult};
 use crate::error::Result;
+use crate::output::{print_error, print_fuzz_result, FuzzResult, OutputHandler, ProgressTracker};
+use futures::stream::{self, StreamExt};
+use reqwest::{ClientBuilder, Method};
+use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::Duration;
-use std::collections::HashSet;
 use tokio::sync::Semaphore;
-use futures::stream::{self, StreamExt};
-use reqwest::{Client, ClientBuilder, Method};
 
 const FUZZ_KEYWORD: &str = "FUZZ";
 
@@ -18,21 +18,27 @@ pub async fn run(args: FuzzArgs) -> Result<()> {
     // Validate FUZZ keyword is present
     let has_fuzz_in_url = args.url.contains(FUZZ_KEYWORD);
     let has_fuzz_in_headers = args.http.headers.iter().any(|h| h.contains(FUZZ_KEYWORD));
-    let has_fuzz_in_data = args.data.as_ref().map(|d| d.contains(FUZZ_KEYWORD)).unwrap_or(false);
+    let has_fuzz_in_data = args
+        .data
+        .as_ref()
+        .map(|d| d.contains(FUZZ_KEYWORD))
+        .unwrap_or(false);
 
     if !has_fuzz_in_url && !has_fuzz_in_headers && !has_fuzz_in_data {
-        return Err(crate::error::RbusterError::ConfigError(
-            format!("FUZZ keyword not found in URL, headers, or data")
-        ));
+        return Err(crate::error::RbusterError::ConfigError(format!(
+            "FUZZ keyword not found in URL, headers, or data"
+        )));
     }
 
     // Parse exclude status codes and lengths
-    let exclude_status: HashSet<u16> = args.exclude_status
+    let exclude_status: HashSet<u16> = args
+        .exclude_status
         .as_ref()
         .map(|s| s.split(',').filter_map(|c| c.trim().parse().ok()).collect())
         .unwrap_or_default();
 
-    let exclude_lengths: HashSet<usize> = args.exclude_length
+    let exclude_lengths: HashSet<usize> = args
+        .exclude_length
         .as_ref()
         .map(|s| s.split(',').filter_map(|l| l.trim().parse().ok()).collect())
         .unwrap_or_default();
@@ -56,7 +62,8 @@ pub async fn run(args: FuzzArgs) -> Result<()> {
     let client = Arc::new(builder.build()?);
 
     // Load wordlist
-    let wordlist = load_wordlist(&args.global.wordlist).await
+    let wordlist = load_wordlist(&args.global.wordlist)
+        .await
         .map_err(|e| crate::error::RbusterError::WordlistError(e))?;
     let total = wordlist.len();
 
@@ -64,9 +71,7 @@ pub async fn run(args: FuzzArgs) -> Result<()> {
     let progress = ProgressTracker::new(total as u64, args.global.quiet || args.global.no_progress);
 
     // Create output handler
-    let output = OutputHandler::new(
-        args.global.output.as_deref()
-    ).await?;
+    let output = OutputHandler::new(args.global.output.as_deref()).await?;
     let output = Arc::new(output);
 
     // Create semaphore for concurrency control
@@ -92,7 +97,6 @@ pub async fn run(args: FuzzArgs) -> Result<()> {
             let exclude_status = exclude_status.clone();
             let exclude_lengths = exclude_lengths.clone();
             let base_url = base_url.clone();
-            let base_headers = base_headers.clone();
             let raw_headers = raw_headers.clone();
             let base_data = base_data.clone();
             let method_str = method_str.clone();
@@ -101,14 +105,16 @@ pub async fn run(args: FuzzArgs) -> Result<()> {
 
             async move {
                 let _permit = semaphore.acquire().await.unwrap();
-                
+
                 if let Some(d) = delay {
                     tokio::time::sleep(d).await;
                 }
 
                 // Replace FUZZ keyword
                 let url = base_url.replace(FUZZ_KEYWORD, &payload);
-                let data = base_data.as_ref().map(|d| d.replace(FUZZ_KEYWORD, &payload));
+                let data = base_data
+                    .as_ref()
+                    .map(|d| d.replace(FUZZ_KEYWORD, &payload));
 
                 // Build request
                 let method = Method::from_bytes(method_str.as_bytes()).unwrap_or(Method::GET);
@@ -132,7 +138,8 @@ pub async fn run(args: FuzzArgs) -> Result<()> {
                 if let Some(ref body) = data {
                     request = request.body(body.clone());
                     if method_str == "POST" {
-                        request = request.header("Content-Type", "application/x-www-form-urlencoded");
+                        request =
+                            request.header("Content-Type", "application/x-www-form-urlencoded");
                     }
                 }
 
@@ -148,8 +155,8 @@ pub async fn run(args: FuzzArgs) -> Result<()> {
                         let lines = body.lines().count();
 
                         // Apply filters
-                        let mut should_show = !exclude_status.contains(&status)
-                            && !exclude_lengths.contains(&size);
+                        let mut should_show =
+                            !exclude_status.contains(&status) && !exclude_lengths.contains(&size);
 
                         // Apply string filter
                         if let Some(ref filter) = filter_string {
@@ -160,7 +167,7 @@ pub async fn run(args: FuzzArgs) -> Result<()> {
 
                         if should_show {
                             progress.inc_found();
-                            
+
                             // Print to console
                             print_fuzz_result(&payload, status, size, words, lines);
 
@@ -176,8 +183,10 @@ pub async fn run(args: FuzzArgs) -> Result<()> {
                                 if writer.is_json() {
                                     let _ = writer.write_json(&result).await;
                                 } else {
-                                    let line = format!("{} [Status: {}, Size: {}, Words: {}, Lines: {}]", 
-                                        payload, status, size, words, lines);
+                                    let line = format!(
+                                        "{} [Status: {}, Size: {}, Words: {}, Lines: {}]",
+                                        payload, status, size, words, lines
+                                    );
                                     let _ = writer.write_line(&line).await;
                                 }
                             }

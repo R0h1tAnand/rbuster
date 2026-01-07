@@ -1,9 +1,9 @@
 //! Core modules
 
-pub mod wordlist;
-pub mod http;
 pub mod dns;
+pub mod http;
+pub mod wordlist;
 
-pub use wordlist::*;
-pub use http::*;
 pub use dns::*;
+pub use http::*;
+pub use wordlist::*;

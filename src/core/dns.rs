@@ -1,11 +1,11 @@
 //! DNS resolver wrapper using hickory-resolver
 
+use crate::error::{RbusterError, Result};
+use hickory_resolver::config::{NameServerConfig, Protocol, ResolverConfig, ResolverOpts};
 use hickory_resolver::TokioAsyncResolver;
-use hickory_resolver::config::{ResolverConfig, ResolverOpts, NameServerConfig, Protocol};
 use std::net::{IpAddr, SocketAddr};
-use std::time::Duration;
 use std::str::FromStr;
-use crate::error::{Result, RbusterError};
+use std::time::Duration;
 
 /// DNS client configuration
 #[derive(Clone, Debug)]
@@ -40,16 +40,16 @@ impl DnsClient {
     pub async fn new(config: DnsConfig) -> Result<Self> {
         let resolver = if let Some(ref resolver_addr) = config.resolver {
             // Parse custom resolver address
-            let socket_addr = parse_resolver_address(resolver_addr)
-                .map_err(|e| RbusterError::DnsError(e))?;
-            
+            let socket_addr =
+                parse_resolver_address(resolver_addr).map_err(|e| RbusterError::DnsError(e))?;
+
             let mut opts = ResolverOpts::default();
             opts.timeout = config.timeout;
             opts.attempts = 2;
-            
+
             let name_server = NameServerConfig::new(socket_addr, Protocol::Udp);
             let resolver_config = ResolverConfig::from_parts(None, vec![], vec![name_server]);
-            
+
             TokioAsyncResolver::tokio(resolver_config, opts)
         } else {
             // Use system resolver
@@ -73,10 +73,11 @@ impl DnsClient {
         }
 
         // Try to resolve CNAME records
-        if let Ok(response) = self.resolver.lookup(
-            domain,
-            hickory_resolver::proto::rr::RecordType::CNAME,
-        ).await {
+        if let Ok(response) = self
+            .resolver
+            .lookup(domain, hickory_resolver::proto::rr::RecordType::CNAME)
+            .await
+        {
             for record in response.iter() {
                 if let Some(cname) = record.as_cname() {
                     cnames.push(cname.to_utf8());
@@ -85,7 +86,10 @@ impl DnsClient {
         }
 
         if ips.is_empty() && cnames.is_empty() {
-            return Err(RbusterError::DnsError(format!("No records found for {}", domain)));
+            return Err(RbusterError::DnsError(format!(
+                "No records found for {}",
+                domain
+            )));
         }
 
         Ok(DnsResult {
@@ -103,9 +107,8 @@ impl DnsClient {
     /// Detect wildcard DNS
     pub async fn detect_wildcard(&self, base_domain: &str) -> Option<Vec<IpAddr>> {
         // Test with a random subdomain that shouldn't exist
-        let random_subdomain = format!("rbuster-wildcard-test-{}.{}", 
-            rand_string(16), base_domain);
-        
+        let random_subdomain = format!("rbuster-wildcard-test-{}.{}", rand_string(16), base_domain);
+
         if let Ok(response) = self.resolver.lookup_ip(&random_subdomain).await {
             let ips: Vec<IpAddr> = response.iter().collect();
             if !ips.is_empty() {
@@ -135,15 +138,15 @@ fn rand_string(len: usize) -> String {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_nanos();
-    
+
     let chars: Vec<char> = "abcdefghijklmnopqrstuvwxyz0123456789".chars().collect();
     let mut result = String::with_capacity(len);
     let mut n = seed as usize;
-    
+
     for _ in 0..len {
         result.push(chars[n % chars.len()]);
         n = n.wrapping_mul(1103515245).wrapping_add(12345);
     }
-    
+
     result
 }

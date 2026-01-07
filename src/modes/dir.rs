@@ -1,29 +1,30 @@
 //! Directory/file enumeration mode
 
 use crate::cli::DirArgs;
-use crate::core::{HttpClient, HttpConfig, parse_headers, load_wordlist};
-use crate::output::{ProgressTracker, print_dir_result, print_error, print_warning, OutputHandler, DirResult};
+use crate::core::{load_wordlist, parse_headers, HttpClient, HttpConfig};
 use crate::error::Result;
+use crate::output::{
+    print_dir_result, print_error, print_warning, DirResult, OutputHandler, ProgressTracker,
+};
+use futures::stream::{self, StreamExt};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Semaphore;
-use futures::stream::{self, StreamExt};
 
 /// Backup file extensions to check
 const BACKUP_EXTENSIONS: &[&str] = &[
-    ".bak", ".backup", ".old", ".orig", ".save", 
-    "~", ".swp", ".tmp", ".copy"
+    ".bak", ".backup", ".old", ".orig", ".save", "~", ".swp", ".tmp", ".copy",
 ];
 
 /// Run directory enumeration
 pub async fn run(args: DirArgs) -> Result<()> {
     // Parse configuration
     let extensions = args.parse_extensions();
-    let valid_status_codes: std::collections::HashSet<u16> = 
+    let valid_status_codes: std::collections::HashSet<u16> =
         args.parse_status_codes().into_iter().collect();
-    let blacklist_codes: std::collections::HashSet<u16> = 
+    let blacklist_codes: std::collections::HashSet<u16> =
         args.parse_status_codes_blacklist().into_iter().collect();
-    let exclude_lengths: std::collections::HashSet<usize> = 
+    let exclude_lengths: std::collections::HashSet<usize> =
         args.parse_exclude_lengths().into_iter().collect();
 
     // Normalize base URL
@@ -44,20 +45,26 @@ pub async fn run(args: DirArgs) -> Result<()> {
     let http_client = Arc::new(HttpClient::new(http_config)?);
 
     // Load wordlist
-    let wordlist = load_wordlist(&args.global.wordlist).await
+    let wordlist = load_wordlist(&args.global.wordlist)
+        .await
         .map_err(|e| crate::error::RbusterError::WordlistError(e))?;
 
     // Calculate total requests (wordlist * extensions)
-    let ext_multiplier = if extensions.is_empty() { 1 } else { extensions.len() + 1 };
+    let ext_multiplier = if extensions.is_empty() {
+        1
+    } else {
+        extensions.len() + 1
+    };
     let total_requests = wordlist.len() * ext_multiplier * (if args.add_slash { 2 } else { 1 });
 
     // Create progress tracker
-    let progress = ProgressTracker::new(total_requests as u64, args.global.quiet || args.global.no_progress);
+    let progress = ProgressTracker::new(
+        total_requests as u64,
+        args.global.quiet || args.global.no_progress,
+    );
 
     // Create output handler
-    let output = OutputHandler::new(
-        args.global.output.as_deref()
-    ).await?;
+    let output = OutputHandler::new(args.global.output.as_deref()).await?;
     let output = Arc::new(output);
 
     // Check for wildcard
@@ -90,7 +97,7 @@ pub async fn run(args: DirArgs) -> Result<()> {
 
         // Add base path
         urls_to_check.push(format!("{}{}", base_url, path));
-        
+
         // Add with slash if requested
         if args.add_slash && !path.ends_with('/') {
             urls_to_check.push(format!("{}{}/", base_url, path));
@@ -128,7 +135,7 @@ pub async fn run(args: DirArgs) -> Result<()> {
 
             async move {
                 let _permit = semaphore.acquire().await.unwrap();
-                
+
                 if let Some(d) = delay {
                     tokio::time::sleep(d).await;
                 }
@@ -139,16 +146,16 @@ pub async fn run(args: DirArgs) -> Result<()> {
                 match result {
                     Ok((status, size, redirect)) => {
                         // Check if we should show this result
-                        let show = valid_status_codes.contains(&status) 
+                        let show = valid_status_codes.contains(&status)
                             && !blacklist_codes.contains(&status)
                             && !exclude_lengths.contains(&size);
 
                         if show {
                             progress.inc_found();
-                            
+
                             // Extract path from URL
                             let path = url.strip_prefix(&base_url).unwrap_or(&url);
-                            
+
                             // Print to console
                             print_dir_result(
                                 path,
@@ -157,7 +164,7 @@ pub async fn run(args: DirArgs) -> Result<()> {
                                 redirect.as_deref(),
                                 show_length,
                                 expanded,
-                                &base_url
+                                &base_url,
                             );
 
                             // Write to file if configured
@@ -171,7 +178,8 @@ pub async fn run(args: DirArgs) -> Result<()> {
                                 if writer.is_json() {
                                     let _ = writer.write_json(&result).await;
                                 } else {
-                                    let line = format!("{} (Status: {}) [Size: {}]", path, status, size);
+                                    let line =
+                                        format!("{} (Status: {}) [Size: {}]", path, status, size);
                                     let _ = writer.write_line(&line).await;
                                 }
                             }
@@ -197,7 +205,8 @@ pub async fn run(args: DirArgs) -> Result<()> {
 
     // Check for backup files if requested
     if discover_backup {
-        let found_files: Vec<_> = results.iter()
+        let found_files: Vec<_> = results
+            .iter()
             .filter_map(|r| r.as_ref())
             .map(|(url, _, _)| url.clone())
             .collect();
@@ -205,10 +214,20 @@ pub async fn run(args: DirArgs) -> Result<()> {
         for file_url in found_files {
             for ext in BACKUP_EXTENSIONS {
                 let backup_url = format!("{}{}", file_url, ext);
-                if let Ok((status, size, redirect)) = http_client.check_url(&backup_url, &method).await {
+                if let Ok((status, size, redirect)) =
+                    http_client.check_url(&backup_url, &method).await
+                {
                     if valid_status_codes.contains(&status) {
                         let path = backup_url.strip_prefix(&base_url).unwrap_or(&backup_url);
-                        print_dir_result(path, status, size, redirect.as_deref(), show_length, expanded, &base_url);
+                        print_dir_result(
+                            path,
+                            status,
+                            size,
+                            redirect.as_deref(),
+                            show_length,
+                            expanded,
+                            &base_url,
+                        );
                     }
                 }
             }
@@ -228,15 +247,15 @@ fn rand_string(len: usize) -> String {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_nanos();
-    
+
     let chars: Vec<char> = "abcdefghijklmnopqrstuvwxyz0123456789".chars().collect();
     let mut result = String::with_capacity(len);
     let mut n = seed as usize;
-    
+
     for _ in 0..len {
         result.push(chars[n % chars.len()]);
         n = n.wrapping_mul(1103515245).wrapping_add(12345);
     }
-    
+
     result
 }

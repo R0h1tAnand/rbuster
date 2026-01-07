@@ -2,13 +2,15 @@
 
 use crate::cli::GcsArgs;
 use crate::core::load_wordlist;
-use crate::output::{ProgressTracker, print_bucket_result, print_error, OutputHandler, BucketResult};
 use crate::error::Result;
+use crate::output::{
+    print_bucket_result, print_error, BucketResult, OutputHandler, ProgressTracker,
+};
+use futures::stream::{self, StreamExt};
+use reqwest::{Client, ClientBuilder, StatusCode};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Semaphore;
-use futures::stream::{self, StreamExt};
-use reqwest::{Client, ClientBuilder, StatusCode};
 
 /// Run GCS bucket enumeration
 pub async fn run(args: GcsArgs) -> Result<()> {
@@ -19,11 +21,12 @@ pub async fn run(args: GcsArgs) -> Result<()> {
             .timeout(Duration::from_secs(args.timeout))
             .pool_max_idle_per_host(50)
             .tcp_nodelay(true)
-            .build()?
+            .build()?,
     );
 
     // Load wordlist
-    let wordlist = load_wordlist(&args.global.wordlist).await
+    let wordlist = load_wordlist(&args.global.wordlist)
+        .await
         .map_err(|e| crate::error::RbusterError::WordlistError(e))?;
     let total = wordlist.len();
 
@@ -31,9 +34,7 @@ pub async fn run(args: GcsArgs) -> Result<()> {
     let progress = ProgressTracker::new(total as u64, args.global.quiet || args.global.no_progress);
 
     // Create output handler
-    let output = OutputHandler::new(
-        args.global.output.as_deref()
-    ).await?;
+    let output = OutputHandler::new(args.global.output.as_deref()).await?;
     let output = Arc::new(output);
 
     // Create semaphore for concurrency control
@@ -52,7 +53,7 @@ pub async fn run(args: GcsArgs) -> Result<()> {
 
             async move {
                 let _permit = semaphore.acquire().await.unwrap();
-                
+
                 if let Some(d) = delay {
                     tokio::time::sleep(d).await;
                 }
@@ -65,7 +66,7 @@ pub async fn run(args: GcsArgs) -> Result<()> {
                 match check_gcs_bucket(&client, &url, max_files).await {
                     Ok(Some((status, files))) => {
                         progress.inc_found();
-                        
+
                         print_bucket_result(&bucket_name, &status, &files);
 
                         // Write to file if configured
@@ -78,7 +79,8 @@ pub async fn run(args: GcsArgs) -> Result<()> {
                             if writer.is_json() {
                                 let _ = writer.write_json(&result).await;
                             } else {
-                                let line = format!("{} [{}] files: {}", bucket_name, status, files.len());
+                                let line =
+                                    format!("{} [{}] files: {}", bucket_name, status, files.len());
                                 let _ = writer.write_line(&line).await;
                             }
                         }
@@ -112,8 +114,9 @@ async fn check_gcs_bucket(
     max_files: usize,
 ) -> std::result::Result<Option<(String, Vec<String>)>, reqwest::Error> {
     let response = client.get(url).send().await?;
-    
-    match response.status() {
+    let status = response.status();
+
+    match status {
         StatusCode::OK => {
             // Bucket is public, try to list files
             let body = response.text().await.unwrap_or_default();
@@ -124,19 +127,15 @@ async fn check_gcs_bucket(
             // Bucket exists but is private
             Ok(Some(("private".to_string(), vec![])))
         }
-        StatusCode::NOT_FOUND => {
-            Ok(None)
-        }
-        _ => {
-            Ok(None)
-        }
+        StatusCode::NOT_FOUND => Ok(None),
+        _ => Ok(None),
     }
 }
 
 /// Parse GCS bucket listing XML to extract file keys
 fn parse_gcs_listing(xml: &str, max_files: usize) -> Vec<String> {
     let mut files = Vec::new();
-    
+
     // Simple XML parsing for <Key> elements (GCS uses similar format to S3)
     for line in xml.lines() {
         if let Some(start) = line.find("<Key>") {
@@ -149,6 +148,6 @@ fn parse_gcs_listing(xml: &str, max_files: usize) -> Vec<String> {
             }
         }
     }
-    
+
     files
 }

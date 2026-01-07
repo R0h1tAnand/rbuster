@@ -1,6 +1,6 @@
 //! Progress bar and status display
 
-use indicatif::{ProgressBar, ProgressStyle, MultiProgress};
+use indicatif::{ProgressBar, ProgressStyle};
 use std::sync::Arc;
 
 /// Create a styled progress bar
@@ -17,7 +17,7 @@ pub fn create_progress_bar(total: u64, quiet: bool) -> Option<ProgressBar> {
         .unwrap()
         .progress_chars("█▓▒░ ")
     );
-    
+
     Some(pb)
 }
 
@@ -27,7 +27,7 @@ pub fn create_spinner(message: &str) -> ProgressBar {
     pb.set_style(
         ProgressStyle::with_template("{spinner:.green} {msg}")
             .unwrap()
-            .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
+            .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]),
     );
     pb.set_message(message.to_string());
     pb.enable_steady_tick(std::time::Duration::from_millis(100));
@@ -59,12 +59,14 @@ impl ProgressTracker {
     }
 
     pub fn inc_found(&self) {
-        self.found.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.found
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         self.update_message();
     }
 
     pub fn inc_error(&self) {
-        self.errors.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.errors
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
     pub fn finish(&self) {

@@ -1,9 +1,9 @@
 //! Output module
 
-pub mod progress;
 pub mod console;
 pub mod file;
+pub mod progress;
 
-pub use progress::*;
 pub use console::*;
 pub use file::*;
+pub use progress::*;

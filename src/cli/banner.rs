@@ -10,18 +10,30 @@ pub fn print_banner() {
  / _, _/ /_/ / /_/ (__  ) /_/  __/ /    
 /_/ |_/_.___/\__,_/____/\__/\___/_/     
                                          "#;
-    
+
     println!("{}", banner.bright_cyan().bold());
     println!("{}", "═".repeat(60).bright_blue());
     println!("{} {}", "rbuster".bright_green().bold(), "v1.0.0".white());
-    println!("{}", "Blazingly fast directory/DNS buster written in Rust".white());
+    println!(
+        "{}",
+        "Blazingly fast directory/DNS buster written in Rust".white()
+    );
     println!("{}", "═".repeat(60).bright_blue());
 }
 
 pub fn print_config(mode: &str, config: &[(&str, String)]) {
-    println!("[{}] Mode:                     {}", "+".bright_green(), mode.bright_yellow());
+    println!(
+        "[{}] Mode:                     {}",
+        "+".bright_green(),
+        mode.bright_yellow()
+    );
     for (key, value) in config {
-        println!("[{}] {:25} {}", "+".bright_green(), format!("{}:", key), value.bright_white());
+        println!(
+            "[{}] {:25} {}",
+            "+".bright_green(),
+            format!("{}:", key),
+            value.bright_white()
+        );
     }
     println!("{}", "═".repeat(60).bright_blue());
     println!("Starting rbuster in {} mode", mode.bright_yellow().bold());
