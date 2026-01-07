@@ -22,6 +22,7 @@ pub fn create_progress_bar(total: u64, quiet: bool) -> Option<ProgressBar> {
 }
 
 /// Create a spinner for indeterminate progress
+#[allow(dead_code)]
 pub fn create_spinner(message: &str) -> ProgressBar {
     let pb = ProgressBar::new_spinner();
     pb.set_style(
@@ -75,10 +76,12 @@ impl ProgressTracker {
         }
     }
 
+    #[allow(dead_code)]
     pub fn found_count(&self) -> usize {
         self.found.load(std::sync::atomic::Ordering::Relaxed)
     }
 
+    #[allow(dead_code)]
     pub fn error_count(&self) -> usize {
         self.errors.load(std::sync::atomic::Ordering::Relaxed)
     }

@@ -69,6 +69,7 @@ impl HttpClient {
     }
 
     /// Make a GET request
+    #[allow(dead_code)]
     pub async fn get(&self, url: &str) -> Result<Response> {
         self.request(Method::GET, url, None).await
     }

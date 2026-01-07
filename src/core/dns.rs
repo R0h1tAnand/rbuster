@@ -26,6 +26,7 @@ impl Default for DnsConfig {
 /// DNS resolution result
 #[derive(Debug, Clone)]
 pub struct DnsResult {
+    #[allow(dead_code)]
     pub subdomain: String,
     pub ips: Vec<IpAddr>,
     pub cnames: Vec<String>,
@@ -100,6 +101,7 @@ impl DnsClient {
     }
 
     /// Check if a subdomain exists (simple check)
+    #[allow(dead_code)]
     pub async fn exists(&self, domain: &str) -> bool {
         self.resolver.lookup_ip(domain).await.is_ok()
     }
